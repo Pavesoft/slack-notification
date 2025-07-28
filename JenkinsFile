@@ -1,0 +1,51 @@
+pipeline {
+  agent any
+
+  environment {
+    // Add environment variables here if needed
+  }
+
+  options {
+    timestamps()
+  }
+
+  stages {
+    stage('Notify Start') {
+      steps {
+        slackSend color: '#FFFF00', message: "🔄 Build Started: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+      }
+    }
+
+    stage('Checkout Code') {
+      steps {
+        git branch: 'main', url: 'https://github.com/Pavesoft/slack-notification.git'
+      }
+    }
+
+    stage('Install Dependencies') {
+      steps {
+        sh 'npm install'
+      }
+    }
+
+    stage('Build Project') {
+      steps {
+        sh 'npm run build'
+      }
+    }
+
+    // You can add more stages here if needed
+  }
+
+  post {
+    success {
+      slackSend color: 'good', message: "✅ Build Succeeded: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Details>)"
+    }
+    failure {
+      slackSend color: 'danger', message: "❌ Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Details>)"
+    }
+    always {
+      slackSend color: '#439FE0', message: "📦 Build Finished: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Details>)"
+    }
+  }
+}
